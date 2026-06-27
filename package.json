@@ -1,0 +1,54 @@
+{
+  "name": "sites-reviews-mcp",
+  "version": "1.0.0",
+  "description": "Model Context Protocol (MCP) server for Sites.Reviews — check any domain's trust score, real reviews and scam-check signals before you trust or pay it.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "sites-reviews-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "examples",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "node --import tsx test/sites-reviews.test.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "sites-reviews",
+    "trust-score",
+    "reviews",
+    "scam-check",
+    "domain-reputation",
+    "claude",
+    "ai-tools"
+  ],
+  "author": "Sites.Reviews",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SitesReviewsTrust/sites-reviews-mcp.git"
+  },
+  "homepage": "https://sites.reviews",
+  "bugs": {
+    "url": "https://github.com/SitesReviewsTrust/sites-reviews-mcp/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
