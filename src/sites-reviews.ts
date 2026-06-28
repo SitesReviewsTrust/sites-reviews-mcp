@@ -1,21 +1,22 @@
 /**
  * Sites.Reviews data layer.
  *
- * Sites.Reviews has no public JSON REST API. Each business page embeds the
- * relevant data as schema.org JSON-LD inside <script type="application/ld+json">
- * blocks. This module fetches a business page, extracts the Organization block
- * that carries an aggregateRating, and normalises it into plain objects.
+ * Reads the public Sites.Reviews REST API (no auth, read-only):
+ *   GET /api/public/v1/business/{domain}   -> company summary + trust score
+ *   GET /api/public/v1/reviews/{domain}    -> recent published reviews
+ * The same data is also exposed as schema.org JSON-LD on each business page;
+ * this module uses the JSON API because it is stable and structured.
  *
  * Everything here is read-only, anonymous and polite. No auth, no secrets.
  */
 
 export const SITE_BASE = "https://sites.reviews";
+export const API_BASE = `${SITE_BASE}/api/public/v1`;
 export const USER_AGENT =
   "sites-reviews-mcp/1.0 (+https://github.com/SitesReviewsTrust/sites-reviews-mcp)";
 
-// A real browser UA is required as well — Cloudflare returns a 1010 block for
-// generic clients. We send a Chrome UA for the request and identify ourselves
-// honestly in the X-Client header.
+// A real browser UA is sent as well — the site sits behind Cloudflare, which
+// can challenge generic clients. We identify ourselves honestly in X-Client.
 const BROWSER_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
   "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
@@ -35,12 +36,12 @@ export interface BusinessResult {
   domain: string;
   name?: string;
   url?: string;
-  /** aggregateRating.ratingValue, on a 0–5 scale. */
+  /** Trust rating on a 0–5 scale (avg_ratings). */
   trustScore?: number;
   reviewCount?: number;
   verdict?: string;
   reviews?: Review[];
-  /** The Sites.Reviews page this data was read from. */
+  /** The Sites.Reviews page this data refers to. */
   source?: string;
   /** Human-readable note, mainly used when found === false. */
   message?: string;
@@ -70,70 +71,30 @@ function domainCandidates(domain: string): string[] {
   return [...new Set(out)];
 }
 
-export function businessUrl(domain: string): string {
+export function pageUrl(domain: string): string {
   return `${SITE_BASE}/businesses/${encodeURIComponent(domain)}`;
 }
 
 type FetchLike = typeof fetch;
 
-/** Fetch one business page. Returns the HTML, or null on 404. Throws on other errors. */
-async function fetchBusinessPage(
-  domain: string,
-  fetchImpl: FetchLike
-): Promise<string | null> {
-  const res = await fetchImpl(businessUrl(domain), {
-    headers: {
-      "User-Agent": BROWSER_UA,
-      "X-Client": USER_AGENT,
-      Accept: "text/html,application/xhtml+xml",
-      "Accept-Language": "en,ru;q=0.8",
-    },
+const HEADERS = {
+  "User-Agent": BROWSER_UA,
+  "X-Client": USER_AGENT,
+  Accept: "application/json",
+  "Accept-Language": "en,ru;q=0.8",
+};
+
+/** GET a public API path. Returns parsed JSON, or null on 404. Throws on other errors. */
+async function apiGet(path: string, fetchImpl: FetchLike): Promise<any | null> {
+  const res = await fetchImpl(`${API_BASE}${path}`, {
+    headers: HEADERS,
     redirect: "follow",
   });
   if (res.status === 404) return null;
   if (!res.ok) {
-    throw new Error(`Sites.Reviews returned HTTP ${res.status} for ${domain}`);
+    throw new Error(`Sites.Reviews API returned HTTP ${res.status} for ${path}`);
   }
-  return await res.text();
-}
-
-/** Extract and JSON.parse every <script type="application/ld+json"> block. */
-function extractJsonLd(html: string): any[] {
-  const re =
-    /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
-  const blocks: any[] = [];
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(html))) {
-    const raw = m[1].trim();
-    if (!raw) continue;
-    try {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) blocks.push(...parsed);
-      else blocks.push(parsed);
-    } catch {
-      // Skip malformed blocks rather than failing the whole request.
-    }
-  }
-  return blocks;
-}
-
-function typeMatches(t: unknown, want: string): boolean {
-  if (Array.isArray(t)) return t.includes(want);
-  return t === want;
-}
-
-/**
- * Find the business Organization block: an Organization that carries an
- * aggregateRating. The first "Sites Reviews" Organization (the site itself)
- * has no aggregateRating, so the aggregateRating test alone separates them.
- */
-function findBusinessOrg(blocks: any[]): any | null {
-  for (const b of blocks) {
-    if (typeMatches(b?.["@type"], "Organization") && b?.aggregateRating) {
-      return b;
-    }
-  }
-  return null;
+  return await res.json();
 }
 
 function toNumber(v: unknown): number | null {
@@ -154,52 +115,47 @@ function buildVerdict(score: number | null, count: number | null): string {
   return `${band} (${score.toFixed(1)}/5 from ${c} review${c === 1 ? "" : "s"}).`;
 }
 
-function extractPositives(review: any): string[] {
-  const items = review?.positiveNotes?.itemListElement;
-  if (!Array.isArray(items)) return [];
-  return items
-    .map((it) => (typeof it?.name === "string" ? it.name : null))
-    .filter((x): x is string => !!x);
-}
-
 function truncate(s: string, max: number): string {
   if (s.length <= max) return s;
   return s.slice(0, max - 1).trimEnd() + "…";
 }
 
-function parseReviews(org: any, bodyLimit = 400): Review[] {
-  const raw = Array.isArray(org?.review) ? org.review : [];
-  return raw.map((r: any): Review => {
-    const author =
-      (typeof r?.author === "string" ? r.author : r?.author?.name) ||
-      "Anonymous";
-    return {
-      author: String(author),
-      rating: toNumber(r?.reviewRating?.ratingValue),
-      date: r?.datePublished ? String(r.datePublished) : null,
-      title: r?.name ? String(r.name) : null,
-      body: r?.reviewBody ? truncate(String(r.reviewBody), bodyLimit) : "",
-      positives: extractPositives(r),
-    };
-  });
+function asStringArray(v: unknown): string[] {
+  if (!Array.isArray(v)) return [];
+  return v
+    .map((x) => (typeof x === "string" ? x : x?.title ?? x?.text))
+    .filter((x): x is string => typeof x === "string" && x.length > 0);
+}
+
+function parseReviews(rows: any[], bodyLimit: number): Review[] {
+  return (Array.isArray(rows) ? rows : []).map((r: any): Review => ({
+    author: r?.author ? String(r.author) : "Anonymous",
+    rating: toNumber(r?.stars),
+    date: r?.created_at ? String(r.created_at) : null,
+    title: r?.title ? String(r.title) : null,
+    body: r?.body ? truncate(String(r.body), bodyLimit) : "",
+    positives: asStringArray(r?.pros),
+  }));
 }
 
 /**
- * Look up a business on Sites.Reviews.
+ * Look up a business on Sites.Reviews via the public API.
  *
  * Tries the normalised domain, and on 404 retries the www-toggled variant.
  * Returns { found: false, ... } when the company is not in the catalog.
  *
  * @param input    Raw domain or URL.
  * @param opts.bodyLimit  Max characters per review body (default 400).
+ * @param opts.maxReviews Max reviews to fetch (default 20).
  * @param opts.fetchImpl  Override for testing (defaults to global fetch).
  */
 export async function checkDomain(
   input: string,
-  opts: { bodyLimit?: number; fetchImpl?: FetchLike } = {}
+  opts: { bodyLimit?: number; maxReviews?: number; fetchImpl?: FetchLike } = {}
 ): Promise<BusinessResult> {
   const fetchImpl = opts.fetchImpl ?? fetch;
   const bodyLimit = opts.bodyLimit ?? 400;
+  const maxReviews = opts.maxReviews ?? 20;
   const normalized = normalizeDomain(input);
 
   if (!normalized || !/[a-z0-9.-]/i.test(normalized)) {
@@ -210,52 +166,53 @@ export async function checkDomain(
     };
   }
 
-  let html: string | null = null;
+  let biz: any | null = null;
   let resolvedDomain = normalized;
   for (const candidate of domainCandidates(normalized)) {
-    html = await fetchBusinessPage(candidate, fetchImpl);
-    if (html !== null) {
+    biz = await apiGet(`/business/${encodeURIComponent(candidate)}`, fetchImpl);
+    if (biz && !biz.error) {
       resolvedDomain = candidate;
       break;
     }
+    biz = null;
   }
 
-  if (html === null) {
+  if (!biz) {
     return {
       found: false,
       domain: normalized,
-      source: businessUrl(normalized),
+      source: pageUrl(normalized),
       message:
         `"${normalized}" is not yet in the Sites.Reviews catalog. ` +
-        `Anyone can be the first to review it at ${businessUrl(normalized)}.`,
+        `Anyone can be the first to review it at ${pageUrl(normalized)}.`,
     };
   }
 
-  const org = findBusinessOrg(extractJsonLd(html));
-  if (!org) {
-    return {
-      found: false,
-      domain: resolvedDomain,
-      source: businessUrl(resolvedDomain),
-      message:
-        `Found a Sites.Reviews page for "${resolvedDomain}" but it has no ` +
-        `trust rating yet. See ${businessUrl(resolvedDomain)}.`,
-    };
-  }
+  const trustScore = toNumber(biz.avg_ratings);
+  const reviewCount = toNumber(biz.total_reviews);
+  const source = biz.url ? String(biz.url) : pageUrl(resolvedDomain);
 
-  const trustScore = toNumber(org?.aggregateRating?.ratingValue);
-  const reviewCount = toNumber(org?.aggregateRating?.reviewCount);
-  const source = businessUrl(resolvedDomain);
+  // Pull recent reviews (best-effort — a summary without reviews is still useful).
+  let reviews: Review[] = [];
+  try {
+    const rv = await apiGet(
+      `/reviews/${encodeURIComponent(resolvedDomain)}?per_page=${maxReviews}`,
+      fetchImpl
+    );
+    if (rv && Array.isArray(rv.reviews)) reviews = parseReviews(rv.reviews, bodyLimit);
+  } catch {
+    // Non-fatal: keep the summary even if the reviews call fails.
+  }
 
   return {
     found: true,
     domain: resolvedDomain,
-    name: org?.name ? String(org.name) : resolvedDomain,
-    url: org?.url ? String(org.url) : source,
+    name: biz.name ? String(biz.name) : resolvedDomain,
+    url: source,
     trustScore: trustScore ?? undefined,
     reviewCount: reviewCount ?? undefined,
     verdict: buildVerdict(trustScore, reviewCount),
-    reviews: parseReviews(org, bodyLimit),
+    reviews,
     source,
   };
 }

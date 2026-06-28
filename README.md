@@ -58,9 +58,9 @@ Every response includes a compact JSON summary plus a link back to https://sites
 
 ## How the data works
 
-- **Source:** public schema.org **JSON-LD** embedded in each `https://sites.reviews/businesses/{domain}` page (the same structured data search engines read).
-- **Read-only.** No API key, no auth, no secrets, no writes — just polite HTTP GETs with a descriptive `User-Agent`.
-- **No search tool by design.** Sites.Reviews has no reliable public search API, so this server only does precise per-domain lookups. A domain that isn't in the catalog returns `found: false` (not an error).
+- **Source:** the public Sites.Reviews REST API — `GET /api/public/v1/business/{domain}` and `/reviews/{domain}` (the same data also published as schema.org JSON-LD on each business page).
+- **Read-only.** No API key, no auth, no secrets, no writes — just polite, rate-limited HTTP GETs.
+- **Per-domain lookups.** Precise lookups by domain; a domain that isn't in the catalog returns `found: false` (not an error).
 
 ## Develop
 
@@ -71,7 +71,7 @@ npm start          # run the server over stdio
 npm test           # live smoke test against sites.reviews
 ```
 
-- `src/sites-reviews.ts` — fetch + JSON-LD parsing (pure, unit-testable).
+- `src/sites-reviews.ts` — public-API client + normalisation (pure, unit-testable).
 - `src/index.ts` — MCP server wiring (`McpServer` + `registerTool`, stdio transport).
 
 ## 🔗 Sites.Reviews ecosystem
