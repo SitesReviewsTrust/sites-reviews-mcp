@@ -11,6 +11,7 @@
     "dist",
     "examples",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "scripts": {
@@ -22,13 +23,22 @@
   "keywords": [
     "mcp",
     "model-context-protocol",
+    "mcp-server",
     "sites-reviews",
     "trust-score",
+    "domain-trust",
+    "website-reviews",
     "reviews",
     "scam-check",
+    "due-diligence",
     "domain-reputation",
     "claude",
-    "ai-tools"
+    "claude-desktop",
+    "cursor",
+    "windsurf",
+    "cline",
+    "ai-tools",
+    "llm-tools"
   ],
   "author": "Sites.Reviews",
   "repository": {

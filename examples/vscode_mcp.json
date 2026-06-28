@@ -1,0 +1,9 @@
+{
+  "servers": {
+    "sites-reviews": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "sites-reviews-mcp"]
+    }
+  }
+}
