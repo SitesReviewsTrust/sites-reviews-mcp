@@ -1,6 +1,6 @@
 {
   "name": "@sitesreviews/mcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MCP server for Sites.Reviews — give Claude, Cursor & any AI assistant a website's trust score, real user reviews and scam-check signals before you trust or pay it. Domain reputation & due-diligence for AI agents.",
   "license": "MIT",
   "type": "module",
