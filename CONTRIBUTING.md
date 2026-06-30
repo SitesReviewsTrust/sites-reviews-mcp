@@ -76,6 +76,23 @@ local server and exercise the tools by chatting.
 Please **do not** open public issues for security vulnerabilities. See
 [SECURITY.md](./SECURITY.md) for private reporting.
 
+## Releasing (maintainers)
+
+Publishing is automated. On a published GitHub Release, CI runs
+[`.github/workflows/publish.yml`](./.github/workflows/publish.yml) and pushes the
+package to npm with [provenance](https://docs.npmjs.com/generating-provenance-statements).
+
+1. Bump the version and tag:
+   ```bash
+   npm version patch   # or minor / major
+   git push --follow-tags
+   ```
+2. Create a GitHub Release for the new `vX.Y.Z` tag (Releases → Draft a new release).
+3. CI verifies the tag matches `package.json`, builds, and publishes `@sitesreviews/mcp`.
+
+Requires an `NPM_TOKEN` repository secret (a granular npm token with read/write on the
+`@sitesreviews` scope). The token lives only as a GitHub Actions secret — never commit it.
+
 ## License
 
 By contributing, you agree that your contributions are licensed under the
