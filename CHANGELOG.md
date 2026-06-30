@@ -7,13 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.0.1] - 2026-06-30
-
-### Changed
-
-- Published from CI with [npm provenance](https://docs.npmjs.com/generating-provenance-statements)
-  (the verified "built & published from source" badge). No functional changes.
-
 ## [1.0.0] - 2026-06-28
 
 First public release of the **Sites.Reviews MCP server** — a
