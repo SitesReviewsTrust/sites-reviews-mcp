@@ -60,7 +60,7 @@ body:
     id: package-version
     attributes:
       label: Package version
-      description: Output of `npx sites-reviews-mcp --version` or the version in your config.
+      description: Output of `npm view @sitesreviews/mcp version` (or the version pinned in your MCP client config).
       placeholder: "1.0.0"
     validations:
       required: false

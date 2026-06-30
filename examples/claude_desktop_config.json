@@ -2,7 +2,7 @@
   "mcpServers": {
     "sites-reviews": {
       "command": "npx",
-      "args": ["-y", "sites-reviews-mcp"]
+      "args": ["-y", "@sitesreviews/mcp"]
     }
   }
 }

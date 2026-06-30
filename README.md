@@ -4,7 +4,7 @@
 
 **Give any AI assistant a website's trust score, real reviews and scam-check signals — before you trust or pay it.**
 
-[![npm version](https://img.shields.io/npm/v/sites-reviews-mcp?logo=npm&color=cb3837)](https://www.npmjs.com/package/sites-reviews-mcp)
+[![npm version](https://img.shields.io/npm/v/@sitesreviews/mcp?logo=npm&color=cb3837)](https://www.npmjs.com/package/@sitesreviews/mcp)
 [![CI](https://github.com/SitesReviewsTrust/sites-reviews-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/SitesReviewsTrust/sites-reviews-mcp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![MCP](https://img.shields.io/badge/MCP-Model%20Context%20Protocol-blueviolet)](https://modelcontextprotocol.io)
@@ -40,7 +40,7 @@ The assistant calls Sites.Reviews, gets a trust score (0–5), a one-line verdic
 
 ## 🚀 Install anywhere
 
-No clone, no global install needed — every client below runs the server on demand with `npx -y sites-reviews-mcp`. It's a tiny, read-only server: **no API key, no auth, no secrets.**
+No clone, no global install needed — every client below runs the server on demand with `npx -y @sitesreviews/mcp`. It's a tiny, read-only server: **no API key, no auth, no secrets.**
 
 <details open>
 <summary><b>Claude Desktop</b></summary>
@@ -54,7 +54,7 @@ Edit `claude_desktop_config.json`:
   "mcpServers": {
     "sites-reviews": {
       "command": "npx",
-      "args": ["-y", "sites-reviews-mcp"]
+      "args": ["-y", "@sitesreviews/mcp"]
     }
   }
 }
@@ -70,7 +70,7 @@ File: [`examples/claude_desktop_config.json`](./examples/claude_desktop_config.j
 One command:
 
 ```bash
-claude mcp add sites-reviews -- npx -y sites-reviews-mcp
+claude mcp add sites-reviews -- npx -y @sitesreviews/mcp
 ```
 
 Or add it to `.mcp.json` (project) / `~/.claude.json` (user) manually:
@@ -80,7 +80,7 @@ Or add it to `.mcp.json` (project) / `~/.claude.json` (user) manually:
   "mcpServers": {
     "sites-reviews": {
       "command": "npx",
-      "args": ["-y", "sites-reviews-mcp"]
+      "args": ["-y", "@sitesreviews/mcp"]
     }
   }
 }
@@ -97,7 +97,7 @@ Create `.cursor/mcp.json` in your project (or `~/.cursor/mcp.json` globally):
   "mcpServers": {
     "sites-reviews": {
       "command": "npx",
-      "args": ["-y", "sites-reviews-mcp"]
+      "args": ["-y", "@sitesreviews/mcp"]
     }
   }
 }
@@ -117,7 +117,7 @@ Edit `~/.codeium/windsurf/mcp_config.json`:
   "mcpServers": {
     "sites-reviews": {
       "command": "npx",
-      "args": ["-y", "sites-reviews-mcp"]
+      "args": ["-y", "@sitesreviews/mcp"]
     }
   }
 }
@@ -137,7 +137,7 @@ Then click **Refresh** in the Windsurf MCP panel (Cascade).
     "sites-reviews": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "sites-reviews-mcp"]
+      "args": ["-y", "@sitesreviews/mcp"]
     }
   }
 }
@@ -150,7 +150,7 @@ Then click **Refresh** in the Windsurf MCP panel (Cascade).
   "mcpServers": {
     "sites-reviews": {
       "command": "npx",
-      "args": ["-y", "sites-reviews-mcp"]
+      "args": ["-y", "@sitesreviews/mcp"]
     }
   }
 }
@@ -160,7 +160,7 @@ Then click **Refresh** in the Windsurf MCP panel (Cascade).
 File: [`examples/vscode_mcp.json`](./examples/vscode_mcp.json).
 </details>
 
-> 💡 The config is identical for almost every MCP client: a `command` of `npx` with args `["-y", "sites-reviews-mcp"]`. Prefer a pinned global install? `npm install -g sites-reviews-mcp` and point `command` at `sites-reviews-mcp`.
+> 💡 The config is identical for almost every MCP client: a `command` of `npx` with args `["-y", "@sitesreviews/mcp"]`. Prefer a pinned global install? `npm install -g @sitesreviews/mcp` and point `command` at `sites-reviews-mcp`.
 
 ---
 
@@ -222,11 +222,11 @@ AI client ──stdio──▶ sites-reviews-mcp ──HTTPS GET──▶ sites.
 | --- | --- |
 | **Tools don't appear** | Fully **restart** the client after editing its config (Claude Desktop especially). Confirm the JSON is valid (no trailing commas). |
 | **`npx: command not found`** | Install Node.js ≥ 18 from [nodejs.org](https://nodejs.org). Check with `node --version`. |
-| **First call is slow** | The first `npx -y` run downloads the package; subsequent runs are cached and fast. For zero-latency startup, `npm install -g sites-reviews-mcp` and use `command: "sites-reviews-mcp"`. |
+| **First call is slow** | The first `npx -y` run downloads the package; subsequent runs are cached and fast. For zero-latency startup, `npm install -g @sitesreviews/mcp` and use `command: "sites-reviews-mcp"`. |
 | **`found: false` for a real site** | The site may not be in the catalog yet, or the domain differs (try the apex vs `www.`, e.g. `ozon.ru` vs `www.ozon.ru`). The server already retries the `www.` toggle automatically. |
 | **Corporate proxy / firewall** | The server needs outbound HTTPS to `sites.reviews`. Allow it, or set the standard `HTTPS_PROXY` env var for the client process. |
 | **Want to see raw logs** | The server logs to **stderr** (stdout is reserved for the MCP protocol). Check your client's MCP log panel. |
-| **Verify it runs at all** | `npx -y @modelcontextprotocol/inspector npx -y sites-reviews-mcp` opens the MCP Inspector to exercise the tools by hand. |
+| **Verify it runs at all** | `npx -y @modelcontextprotocol/inspector npx -y @sitesreviews/mcp` opens the MCP Inspector to exercise the tools by hand. |
 
 ---
 
